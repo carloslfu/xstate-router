@@ -1,5 +1,5 @@
 import * as toRegex from 'path-to-regexp'
-import { Machine, matchesState } from 'xstate'
+import { Machine, matchesState, StateSchema, EventObject, MachineConfig, MachineOptions } from 'xstate'
 import { interpret } from 'xstate/lib/interpreter'
 import { getNodes } from 'xstate/lib/graph'
 import { assign } from 'xstate/lib/actions'
@@ -68,12 +68,27 @@ export function addRouterEvents(history, configObj, routes) {
   return config
 }
 
-export function routerMachine({
+interface RouterArgs<
+  TContext = any,
+  TState extends StateSchema = any,
+  TEvent extends EventObject = any
+> {
+  config: MachineConfig<TContext, TState, TEvent>,
+  options: MachineOptions<TContext, TEvent>,
+  initialContext: TContext,
+  history?
+}
+
+export function routerMachine<
+  TContext = any,
+  TState extends StateSchema = any,
+  TEvent extends EventObject = any
+>({
   config,
-  history = createBrowserHistory(),
   options = {},
-  initialContext = {}
-}) {
+  initialContext = {},
+  history = createBrowserHistory(),
+}: RouterArgs) {
   let debounceHistoryFlag = false
   let debounceState = false
   const routes = getRoutes(config)
