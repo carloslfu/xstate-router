@@ -28,7 +28,7 @@ export function resolve(routes, location, handleError?: boolean) {
   }
 }
 
-export const routerEventPrefix = 'Router_'
+export const routerEvent = 'route-changed'
 
 export function getRoutes(config) {
   const nodes = getNodes(Machine(config))
@@ -48,23 +48,27 @@ export function addRouterEvents(history, configObj, routes) {
   } else {
     config.on = { ...config.on }
   }
-  config.on.RouterCmd_refresh = {
+  const on: any = []
+  on.push({
+    cond: (context, event) => event.refresh,
     actions: assign(ctx => ({
       ...ctx,
       location: history.location,
       match: resolve(routes, history.location)
     }))
-  }
+  })
   for (const route of routes) {
-    config.on[routerEventPrefix + route[0].join('_')] = {
-      target: '#(machine).' + route[0].join('.'),
-      actions: assign(ctx => ({
-        ...ctx,
-        location: history.location,
-        match: matchURI(route[1], history.location.pathname)
-      }))
-    }
+      on.push({
+        target: '#(machine).' + route[0].join('.'),
+        cond: (context, event) => event.refresh === false && event.route && event.route === route[1],
+        actions: assign(ctx => ({
+            ...ctx,
+            location: history.location,
+            match: matchURI(route[1], history.location.pathname)
+        }))
+      });
   }
+  config.on[routerEvent] = on;
   return config
 }
 
@@ -85,7 +89,7 @@ export function routerMachine<
   TEvent extends EventObject = any
 >({
   config,
-  options = {},
+  options = ({} as MachineOptions<TContext, TEvent>),
   initialContext = {},
   history = createBrowserHistory(),
 }: RouterArgs) {
@@ -112,7 +116,7 @@ export function routerMachine<
     if (!matchURI(path, history.location.pathname)) {
       debounceHistoryFlag = true
       history.push(path)
-      service.send('RouterCmd_refresh')
+      service.send({ type: routerEvent, refresh: true, route: path })
     }
   })
 
@@ -137,7 +141,7 @@ export function routerMachine<
     }
     if (matchingRoute) {
       debounceState = true
-      service.send(routerEventPrefix + matchingRoute[0].join('_'))
+      service.send({ type: routerEvent, refresh: false, route: matchingRoute[1] })
       const state = service.state.value
       if (!matchesState(state, matchingRoute[0].join('.'))) {
         const stateNode = service.machine.getStateNodeByPath(
