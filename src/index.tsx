@@ -119,7 +119,7 @@ export function routerMachine<
     if (!matchURI(path, history.location.pathname)) {
       debounceHistoryFlag = true
       history.push(path)
-      service.send({ type: routerEvent, refresh: true, route: path })
+      service.send({ type: routerEvent, refresh: true, route: path, service: service })
     }
   })
 
@@ -144,7 +144,7 @@ export function routerMachine<
     }
     if (matchingRoute) {
       debounceState = matchingRoute[1]  // debounce only for this route
-      service.send({ type: routerEvent, refresh: false, route: matchingRoute[1] })
+      service.send({ type: routerEvent, refresh: false, route: matchingRoute[1], service: service })
       const state = service.state.value
       if (!matchesState(state, matchingRoute[0].join('.'))) {
         const stateNode = service.machine.getStateNodeByPath(
