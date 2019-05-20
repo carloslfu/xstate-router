@@ -48,7 +48,8 @@ export function addRouterEvents(history, configObj, routes) {
   } else {
     config.on = { ...config.on }
   }
-  const on: any = []
+  const given: any = routerEvent in config.on ? config.on[routerEvent] : [];
+  const on: any = given instanceof Array ? given : [given];
   on.push({
     cond: (context, event) => event.refresh,
     actions: assign(ctx => ({
