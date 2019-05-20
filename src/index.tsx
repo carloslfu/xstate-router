@@ -107,12 +107,15 @@ export function routerMachine<
   const service = interpret(Machine(enhancedConfig, options, enhancedContext))
   service.start()
   service.onTransition(state => {
-    if (debounceState) {
+    const stateNode = service.machine.getStateNodeByPath((state.tree as any).paths[0])
+    const path = findPathRecursive(stateNode)
+    if (debounceState
+        // debounce only if no target for event was given e.g. in case of 
+        // fetching 'route-changed' events by the user
+        && debounceState[1] === path) {
       debounceState = false
       return
     }
-    const stateNode = service.machine.getStateNodeByPath((state.tree as any).paths[0])
-    const path = findPathRecursive(stateNode)
     if (!matchURI(path, history.location.pathname)) {
       debounceHistoryFlag = true
       history.push(path)
@@ -140,7 +143,7 @@ export function routerMachine<
       }
     }
     if (matchingRoute) {
-      debounceState = true
+      debounceState = matchingRoute[1]  // debounce only for this route
       service.send({ type: routerEvent, refresh: false, route: matchingRoute[1] })
       const state = service.state.value
       if (!matchesState(state, matchingRoute[0].join('.'))) {
