@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { render, fireEvent, cleanup } from 'react-testing-library'
 import { createMemoryHistory } from 'history'
+import { MachineOptions } from 'xstate'
 import { toStatePaths } from 'xstate/lib/utils'
 import { routerMachine } from './index'
 
@@ -47,7 +48,7 @@ const machineConfig = {
   }
 }
 
-const options = {}
+const options: MachineOptions<any, any> = {} as MachineOptions<any, any>
 
 const initialContext = {}
 
