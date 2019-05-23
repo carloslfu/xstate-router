@@ -23,17 +23,17 @@ export function buildURI(path: string, match: any) {
     const pattern: RegExp = toRegex(path, keys) // TODO: Use caching
     const regexp = pattern.exec(path)
     if (!regexp) return path
-    let result = '';
-    var lastIndex = 0;
+    let result = ''
+    var lastIndex = 0
     for (let i = 1; i < regexp.length; i++) {
-        const param: string = regexp[i];           // e.g. :whatever
-        const paramName: string = param.substr(1); // e.g. whatever
-        const pos: number = path.indexOf(param, lastIndex);
-        result += path.substring(lastIndex, pos) + match[paramName];
-        lastIndex = pos + param.length;
+        const param: string = regexp[i]           // e.g. :whatever
+        const paramName: string = param.substr(1) // e.g. whatever
+        const pos: number = path.indexOf(param, lastIndex)
+        result += path.substring(lastIndex, pos) + match[paramName]
+        lastIndex = pos + param.length
     }
     result += path.substr(lastIndex)
-    return result;
+    return result
 }
 
 export function resolve(routes, location, handleError?: boolean) {
@@ -138,7 +138,7 @@ export function routerMachine<
     }
     if (!matchURI(path, history.location.pathname)) {
       debounceHistoryFlag = true
-      const uri = buildURI(path, state.context.match);
+      const uri = buildURI(path, state.context.match)
       history.push(uri)
       service.send({ type: routerEvent, dueToStateTransition: true, route: path, service: service })
     }
