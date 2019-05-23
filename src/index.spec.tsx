@@ -3,6 +3,7 @@ import { render, fireEvent, cleanup } from 'react-testing-library'
 import { createMemoryHistory } from 'history'
 import { MachineOptions } from 'xstate'
 import { toStatePaths } from 'xstate/lib/utils'
+import { assign } from 'xstate/lib/actions'
 import { routerMachine } from './index'
 
 function renderWithRouter(
@@ -23,7 +24,14 @@ const machineConfig = {
   initial: 'home',
   on: {
     GoAbout: 'about',
-    GoSubstateB: 'substate.b'
+    GoSubstateB: 'substate.b',
+    GoSubstateC: {
+        target: 'substate.c',
+        actions: assign((ctx, event) => ({
+                          ...ctx,
+                          match: { param: event.param }
+                      }))
+    }
   },
   states: {
     home: {
@@ -36,7 +44,11 @@ const machineConfig = {
               cond: (context, event) => event.dueToStateTransition === false
                                         && event.route 
                                         && event.route === '/substate/a',
-              target: 'substate.c'
+              target: 'substate.c',
+              actions: assign(ctx => ({
+                          ...ctx,
+                          match: { param: 815 }
+                      }))
           },
           {
               cond: (context, event) => event.dueToStateTransition === false
@@ -53,7 +65,9 @@ const machineConfig = {
           meta: { path: '/substate/a' }
         },
         b: {},
-        c: {}
+        c: {
+          meta: { path: '/substate/:param/c' }
+        }
       }
     },
     noMatch: {
@@ -98,6 +112,7 @@ class App extends React.Component<any, any> {
       <div>
         <div><button data-testid="go-about" onClick={() => this.send('GoAbout')}></button></div>}
         <div><button data-testid="go-substate-b" onClick={() => this.send('GoSubstateB')}></button></div>}
+        <div><button data-testid="go-substate-c" onClick={() => this.send('GoSubstateC', { param: 817 })}></button></div>}
         <div data-testid="state">{stateToString(this.state.machineState)}</div>}
         <div data-testid="location-display">{this.props.history.location.pathname}</div>
       </div>
@@ -137,6 +152,13 @@ describe('XStateRouter', () => {
     fireEvent.click(getByTestId('go-about'))
     history.replace('/substate/a')
     expect(getByTestId('state').textContent).toBe('substate.c')
+    expect(getByTestId('location-display').textContent).toBe('/substate/815/c')
+  })
+
+  it('When enter a routable parameterized state, match should contain parameter value', () => {
+    const { getByTestId } = renderWithRouter(App, { route: '/substate/816/c' })
+    expect(getByTestId('state').textContent).toBe('substate.c')
+    expect(getByTestId('location-display').textContent).toBe('/substate/816/c')
   })
 
   it('When enter a routable state, should be able to stop state update', () => {
@@ -150,6 +172,12 @@ describe('XStateRouter', () => {
     const { getByTestId } = renderWithRouter(App, { route: '/about' })
     fireEvent.click(getByTestId('go-substate-b'))
     expect(getByTestId('location-display').textContent).toBe('/substate')
+  })
+
+  it('When enter a state having a parameterized route, the route should reflect the current param value', () => {
+    const { getByTestId } = renderWithRouter(App, { route: '/about' })
+    fireEvent.click(getByTestId('go-substate-c'))
+    expect(getByTestId('location-display').textContent).toBe('/substate/817/c')
   })
 
 })
