@@ -30,7 +30,20 @@ const machineConfig = {
       meta: { path: '/' },
     },
     about: {
-      meta: { path: '/about' }
+      meta: { path: '/about' },
+      on: {
+          'route-changed': [{
+              cond: (context, event) => event.refresh === false
+                                        && event.route 
+                                        && event.route === '/substate/a',
+              target: 'substate.c'
+          },
+          {
+              cond: (context, event) => event.refresh === false
+                                        && event.route 
+                                        && event.route === '/substate/b'
+          }]
+      }
     },
     substate: {
       meta: { path: '/substate' },
@@ -40,6 +53,7 @@ const machineConfig = {
           meta: { path: '/substate/a' }
         },
         b: {},
+        c: {}
       }
     },
     noMatch: {
@@ -116,6 +130,20 @@ describe('XStateRouter', () => {
     fireEvent.click(getByTestId('go-about'))
     history.goBack()
     expect(getByTestId('state').textContent).toBe('home')
+  })
+
+  it('When enter a routable state, should be able to redirect state update', () => {
+    const { getByTestId, history } = renderWithRouter(App)
+    fireEvent.click(getByTestId('go-about'))
+    history.replace('/substate/a');
+    expect(getByTestId('state').textContent).toBe('substate.c')
+  })
+
+  it('When enter a routable state, should be able to stop state update', () => {
+    const { getByTestId, history } = renderWithRouter(App)
+    fireEvent.click(getByTestId('go-about'))
+    history.replace('/substate/b');
+    expect(getByTestId('state').textContent).toBe('about')
   })
 
   it('When enter a substate of a routable state from other routable state, should update the route', () => {
