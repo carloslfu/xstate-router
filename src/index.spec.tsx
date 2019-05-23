@@ -33,13 +33,13 @@ const machineConfig = {
       meta: { path: '/about' },
       on: {
           'route-changed': [{
-              cond: (context, event) => event.refresh === false
+              cond: (context, event) => event.dueToStateTransition === false
                                         && event.route 
                                         && event.route === '/substate/a',
               target: 'substate.c'
           },
           {
-              cond: (context, event) => event.refresh === false
+              cond: (context, event) => event.dueToStateTransition === false
                                         && event.route 
                                         && event.route === '/substate/b'
           }]
@@ -135,14 +135,14 @@ describe('XStateRouter', () => {
   it('When enter a routable state, should be able to redirect state update', () => {
     const { getByTestId, history } = renderWithRouter(App)
     fireEvent.click(getByTestId('go-about'))
-    history.replace('/substate/a');
+    history.replace('/substate/a')
     expect(getByTestId('state').textContent).toBe('substate.c')
   })
 
   it('When enter a routable state, should be able to stop state update', () => {
     const { getByTestId, history } = renderWithRouter(App)
     fireEvent.click(getByTestId('go-about'))
-    history.replace('/substate/b');
+    history.replace('/substate/b')
     expect(getByTestId('state').textContent).toBe('about')
   })
 

@@ -48,10 +48,10 @@ export function addRouterEvents(history, configObj, routes) {
   } else {
     config.on = { ...config.on }
   }
-  const given: any = routerEvent in config.on ? config.on[routerEvent] : [];
-  const on: any = given instanceof Array ? given : [given];
+  const given: any = routerEvent in config.on ? config.on[routerEvent] : []
+  const on: any = given instanceof Array ? given : [given]
   on.push({
-    cond: (context, event) => event.refresh,
+    cond: (context, event) => event.dueToStateTransition,
     actions: assign(ctx => ({
       ...ctx,
       location: history.location,
@@ -61,15 +61,15 @@ export function addRouterEvents(history, configObj, routes) {
   for (const route of routes) {
       on.push({
         target: '#(machine).' + route[0].join('.'),
-        cond: (context, event) => event.refresh === false && event.route && event.route === route[1],
+        cond: (context, event) => event.dueToStateTransition === false && event.route && event.route === route[1],
         actions: assign(ctx => ({
             ...ctx,
             location: history.location,
             match: matchURI(route[1], history.location.pathname)
         }))
-      });
+      })
   }
-  config.on[routerEvent] = on;
+  config.on[routerEvent] = on
   return config
 }
 
@@ -120,7 +120,7 @@ export function routerMachine<
     if (!matchURI(path, history.location.pathname)) {
       debounceHistoryFlag = true
       history.push(path)
-      service.send({ type: routerEvent, refresh: true, route: path, service: service })
+      service.send({ type: routerEvent, dueToStateTransition: true, route: path, service: service })
     }
   })
 
@@ -145,7 +145,7 @@ export function routerMachine<
     }
     if (matchingRoute) {
       debounceState = matchingRoute[1]  // debounce only for this route
-      service.send({ type: routerEvent, refresh: false, route: matchingRoute[1], service: service })
+      service.send({ type: routerEvent, dueToStateTransition: false, route: matchingRoute[1], service: service })
       const state = service.state.value
       if (!matchesState(state, matchingRoute[0].join('.'))) {
         const stateNode = service.machine.getStateNodeByPath(
