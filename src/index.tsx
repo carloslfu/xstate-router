@@ -17,6 +17,25 @@ export function matchURI(path, uri) {
   return params
 }
 
+
+export function buildURI(path: string, match: any) {
+    const keys: any = []
+    const pattern: RegExp = toRegex(path, keys) // TODO: Use caching
+    const regexp = pattern.exec(path)
+    if (!regexp) return path
+    let result = ''
+    var lastIndex = 0
+    for (let i = 1; i < regexp.length; i++) {
+        const param: string = regexp[i]           // e.g. :whatever
+        const paramName: string = param.substr(1) // e.g. whatever
+        const pos: number = path.indexOf(param, lastIndex)
+        result += path.substring(lastIndex, pos) + match[paramName]
+        lastIndex = pos + param.length
+    }
+    result += path.substr(lastIndex)
+    return result
+}
+
 export function resolve(routes, location, handleError?: boolean) {
   for (const route of routes) {
     const uri = location.pathname
@@ -28,7 +47,7 @@ export function resolve(routes, location, handleError?: boolean) {
   }
 }
 
-export const routerEventPrefix = 'Router_'
+export const routerEvent = 'route-changed'
 
 export function getRoutes(config) {
   const nodes = getNodes(Machine(config))
@@ -48,23 +67,28 @@ export function addRouterEvents(history, configObj, routes) {
   } else {
     config.on = { ...config.on }
   }
-  config.on.RouterCmd_refresh = {
+  const given: any = routerEvent in config.on ? config.on[routerEvent] : []
+  const on: any = given instanceof Array ? given : [given]
+  on.push({
+    cond: (context, event) => event.dueToStateTransition,
     actions: assign(ctx => ({
       ...ctx,
       location: history.location,
       match: resolve(routes, history.location)
     }))
-  }
+  })
   for (const route of routes) {
-    config.on[routerEventPrefix + route[0].join('_')] = {
-      target: '#(machine).' + route[0].join('.'),
-      actions: assign(ctx => ({
-        ...ctx,
-        location: history.location,
-        match: matchURI(route[1], history.location.pathname)
-      }))
-    }
+      on.push({
+        target: '#(machine).' + route[0].join('.'),
+        cond: (context, event) => event.dueToStateTransition === false && event.route && event.route === route[1],
+        actions: assign(ctx => ({
+            ...ctx,
+            location: history.location,
+            match: matchURI(route[1], history.location.pathname)
+        }))
+      })
   }
+  config.on[routerEvent] = on
   return config
 }
 
@@ -85,7 +109,7 @@ export function routerMachine<
   TEvent extends EventObject = any
 >({
   config,
-  options = {},
+  options = ({} as MachineOptions<TContext, TEvent>),
   initialContext = {},
   history = createBrowserHistory(),
 }: RouterArgs) {
@@ -103,16 +127,20 @@ export function routerMachine<
   const service = interpret(Machine(enhancedConfig, options, enhancedContext))
   service.start()
   service.onTransition(state => {
-    if (debounceState) {
+    const stateNode = service.machine.getStateNodeByPath((state.tree as any).paths[0])
+    const path = findPathRecursive(stateNode)
+    if (debounceState
+        // debounce only if no target for event was given e.g. in case of 
+        // fetching 'route-changed' events by the user
+        && debounceState[1] === path) {
       debounceState = false
       return
     }
-    const stateNode = service.machine.getStateNodeByPath((state.tree as any).paths[0])
-    const path = findPathRecursive(stateNode)
     if (!matchURI(path, history.location.pathname)) {
       debounceHistoryFlag = true
-      history.push(path)
-      service.send('RouterCmd_refresh')
+      const uri = buildURI(path, state.context.match)
+      history.push(uri)
+      service.send({ type: routerEvent, dueToStateTransition: true, route: path, service: service })
     }
   })
 
@@ -136,8 +164,8 @@ export function routerMachine<
       }
     }
     if (matchingRoute) {
-      debounceState = true
-      service.send(routerEventPrefix + matchingRoute[0].join('_'))
+      debounceState = matchingRoute[1]  // debounce only for this route
+      service.send({ type: routerEvent, dueToStateTransition: false, route: matchingRoute[1], service: service })
       const state = service.state.value
       if (!matchesState(state, matchingRoute[0].join('.'))) {
         const stateNode = service.machine.getStateNodeByPath(
