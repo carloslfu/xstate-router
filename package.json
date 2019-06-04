@@ -1,6 +1,6 @@
 {
   "name": "xstate-router",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "XState Router. Add routes to your XState machine.",
   "main": "lib/index.js",
   "files": [
@@ -15,7 +15,7 @@
     "build:watch": "tsc --watch"
   },
   "peerDependencies": {
-    "xstate": "^4.2.3"
+    "xstate": "^4.6.0"
   },
   "devDependencies": {
     "@types/jest": "^24.0.13",
