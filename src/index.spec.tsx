@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { render, fireEvent, cleanup } from 'react-testing-library'
+import { render, fireEvent, cleanup } from '@testing-library/react'
 import { createMemoryHistory } from 'history'
 import { MachineOptions } from 'xstate'
 import { toStatePaths } from 'xstate/lib/utils'
