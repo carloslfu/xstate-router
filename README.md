@@ -79,6 +79,10 @@ where the event trigger could look like this:
 <button onClick={() => this.send('ShowDetails', { item: 817 })}>Show details...</button>
 ```
 
+### Paths
+
+Paths could have parameters such as `/items/:id:/details` and regular expressions, for more information please read this: https://github.com/pillarjs/path-to-regexp.
+
 ### Router events
 
 If a route changes then a parameterized event `'route-changed'` is fired: e.g. `{ dueToStateTransition: "true", route: "/blog", service: /* the xstate interpreter */ }`. 
