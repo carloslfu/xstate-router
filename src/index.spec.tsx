@@ -27,10 +27,9 @@ const machineConfig = {
     GoSubstateB: 'substate.b',
     GoSubstateC: {
         target: 'substate.c',
-        actions: assign((ctx, event) => ({
-                          ...ctx,
-                          match: { param: event.param }
-                      }))
+        actions: assign({
+          match: (ctx, event) => ({ param: (event as any).param }),
+        })
     }
   },
   states: {
@@ -40,21 +39,22 @@ const machineConfig = {
     about: {
       meta: { path: '/about' },
       on: {
-          'route-changed': [{
-              cond: (context, event) => event.dueToStateTransition === false
-                                        && event.route 
-                                        && event.route === '/substate/a',
-              target: 'substate.c',
-              actions: assign(ctx => ({
-                          ...ctx,
-                          match: { param: 815 }
-                      }))
+        'route-changed': [
+          {
+            cond: (context, event) => event.dueToStateTransition === false
+              && event.route 
+              && event.route === '/substate/a',
+            target: 'substate.c',
+            actions: assign({
+              match: { param: 815 }
+            }),
           },
           {
-              cond: (context, event) => event.dueToStateTransition === false
-                                        && event.route 
-                                        && event.route === '/substate/b'
-          }]
+            cond: (context, event) => event.dueToStateTransition === false
+              && event.route 
+              && event.route === '/substate/b',
+          }
+        ],
       }
     },
     substate: {
@@ -71,7 +71,7 @@ const machineConfig = {
       }
     },
     noMatch: {
-      meta: { path: '*' }
+      meta: { path: '(.*)' }
     },
   }
 }
@@ -163,8 +163,8 @@ describe('XStateRouter', () => {
 
   it('When enter a routable state, should be able to stop state update', () => {
     const { getByTestId, history } = renderWithRouter(App)
-    fireEvent.click(getByTestId('go-about'))
     history.replace('/substate/b')
+    fireEvent.click(getByTestId('go-about'))
     expect(getByTestId('state').textContent).toBe('about')
   })
 
@@ -178,6 +178,11 @@ describe('XStateRouter', () => {
     const { getByTestId } = renderWithRouter(App, { route: '/about' })
     fireEvent.click(getByTestId('go-substate-c'))
     expect(getByTestId('location-display').textContent).toBe('/substate/817/c')
+  })
+
+  it('When the path doesn\'t match, should go to the default route', () => {
+    const { getByTestId } = renderWithRouter(App, { route: '/no-matching-route' })
+    expect(getByTestId('state').textContent).toBe('noMatch')
   })
 
 })

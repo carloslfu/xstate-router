@@ -1,13 +1,12 @@
-import * as toRegex from 'path-to-regexp'
-import { Machine, matchesState, StateSchema, EventObject, MachineConfig, MachineOptions } from 'xstate'
-import { interpret } from 'xstate/lib/interpreter'
-import { getNodes } from 'xstate/lib/graph'
+import { pathToRegexp } from 'path-to-regexp'
+import { Machine, matchesState, StateSchema, EventObject, MachineConfig, MachineOptions, interpret } from 'xstate'
+import { getStateNodes } from '@xstate/graph'
 import { assign } from 'xstate/lib/actions'
 import { createBrowserHistory } from 'history'
 
 export function matchURI(path, uri) {
-  const keys: any = []
-  const pattern = toRegex(path, keys) // TODO: Use caching
+  const keys: any[] = []
+  const pattern = pathToRegexp(path, keys)
   const match = pattern.exec(uri)
   if (!match) return null
   const params = Object.create(null)
@@ -17,10 +16,9 @@ export function matchURI(path, uri) {
   return params
 }
 
-
 export function buildURI(path: string, match: any) {
     const keys: any = []
-    const pattern: RegExp = toRegex(path, keys) // TODO: Use caching
+    const pattern: RegExp = pathToRegexp(path, keys) // TODO: Use caching
     const regexp = pattern.exec(path)
     if (!regexp) return path
     let result = ''
@@ -50,7 +48,7 @@ export function resolve(routes, location, handleError?: boolean) {
 export const routerEvent = 'route-changed'
 
 export function getRoutes(config) {
-  const nodes = getNodes(Machine(config))
+  const nodes = getStateNodes(Machine(config))
   const routes: any = []
   for (const node of nodes) {
     if (node.meta && node.meta.path) {
@@ -71,8 +69,7 @@ export function addRouterEvents(history, configObj, routes) {
   const on: any = given instanceof Array ? given : [given]
   on.push({
     cond: (context, event) => event.dueToStateTransition,
-    actions: assign(ctx => ({
-      ...ctx,
+    actions: assign(() => ({
       location: history.location,
       match: resolve(routes, history.location)
     }))
@@ -81,8 +78,7 @@ export function addRouterEvents(history, configObj, routes) {
       on.push({
         target: '#(machine).' + route[0].join('.'),
         cond: (context, event) => event.dueToStateTransition === false && event.route && event.route === route[1],
-        actions: assign(ctx => ({
-            ...ctx,
+        actions: assign(() => ({
             location: history.location,
             match: matchURI(route[1], history.location.pathname)
         }))
@@ -126,8 +122,11 @@ export function routerMachine<
   }
   const service = interpret(Machine(enhancedConfig, options, enhancedContext))
   service.start()
+
+  handleRouterTransition(history.location)
+
   service.onTransition(state => {
-    const stateNode = service.machine.getStateNodeByPath((state.tree as any).paths[0])
+    const stateNode = getCurrentStateNode(service, state)
     const path = findPathRecursive(stateNode)
     if (debounceState
         // debounce only if no target for event was given e.g. in case of 
@@ -143,8 +142,6 @@ export function routerMachine<
       service.send({ type: routerEvent, dueToStateTransition: true, route: path, service: service })
     }
   })
-
-  handleRouterTransition(history.location)
 
   history.listen(location => {
     if (debounceHistoryFlag) {
@@ -168,9 +165,8 @@ export function routerMachine<
       service.send({ type: routerEvent, dueToStateTransition: false, route: matchingRoute[1], service: service })
       const state = service.state.value
       if (!matchesState(state, matchingRoute[0].join('.'))) {
-        const stateNode = service.machine.getStateNodeByPath(
-          (service.state.tree as any).paths[0]
-        )
+        const stateNode = getCurrentStateNode(service, service.state)
+
         if (stateNode.meta && stateNode.meta.path) {
           if (debounceHistory) {
             debounceHistoryFlag = true
@@ -192,4 +188,10 @@ export function findPathRecursive(stateNode) {
     }
     actual = actual.parent
   }
+}
+
+function getCurrentStateNode(service, state) {
+  const strings = state.toStrings()
+  const stateNode = service.machine.getStateNodeByPath(strings[strings.length - 1])
+  return stateNode
 }

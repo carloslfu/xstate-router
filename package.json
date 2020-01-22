@@ -1,6 +1,6 @@
 {
   "name": "xstate-router",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "XState Router. Add routes to your XState machine.",
   "main": "lib/index.js",
   "files": [
@@ -15,18 +15,18 @@
     "build:watch": "tsc --watch"
   },
   "peerDependencies": {
-    "xstate": "^4.6.0"
+    "xstate": "^4.7.6"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.13",
-    "@types/react": "^16.8.19",
+    "@types/jest": "^24.9.0",
+    "@types/react": "^16.9.18",
     "jest": "^24.8.0",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
-    "@testing-library/react": "^8.0.1",
-    "ts-jest": "^24.0.2",
-    "typescript": "^3.0.3",
-    "xstate": "^4.6.0"
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "@testing-library/react": "^9.4.0",
+    "ts-jest": "^24.3.0",
+    "typescript": "^3.7.5",
+    "xstate": "^4.7.6"
   },
   "keywords": [
     "xstate",
@@ -40,7 +40,8 @@
   "author": "@carloslfu",
   "license": "MIT",
   "dependencies": {
-    "path-to-regexp": "^2.4.0",
-    "history": "^4.7.2"
+    "@xstate/graph": "^1.0.0",
+    "history": "^4.10.1",
+    "path-to-regexp": "^6.1.0"
   }
 }
