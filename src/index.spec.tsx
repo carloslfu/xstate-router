@@ -89,7 +89,7 @@ const machineConfig = {
     root_path0: {
       meta: { path: '/root_without_path/path0' }
     },
-    root_path2: {},
+    root_path1: {},
     root_without_path: {},
     noMatch: {
       meta: { path: '(.*)' }
@@ -164,8 +164,8 @@ describe('XStateRouter', () => {
   })
 
   it('When enter a route with siblings states with no path, should work (Root level)', () => {
-    const { getByTestId } = renderWithRouter(App, { route: '/root_without_path/path1' })
-    expect(getByTestId('state').textContent).toBe('path1')
+    const { getByTestId } = renderWithRouter(App, { route: '/root_without_path/path0' })
+    expect(getByTestId('state').textContent).toBe('root_path0')
   })
 
   it('When enter a state with no path with siblings with path, should work (Root level)', () => {

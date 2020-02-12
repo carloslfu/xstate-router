@@ -5,6 +5,9 @@ import { assign } from 'xstate/lib/actions'
 import { createBrowserHistory } from 'history'
 
 export function matchURI(path, uri) {
+  if (path === undefined) {
+    return {}
+  }
   const keys: any[] = []
   const pattern = pathToRegexp(path, keys)
   const match = pattern.exec(uri)
