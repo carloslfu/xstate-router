@@ -30,7 +30,9 @@ const machineConfig = {
         actions: assign({
           match: (ctx, event) => ({ param: (event as any).param }),
         })
-    }
+    },
+    GoToWithoutPath: 'nested_mixed_without_path.without_path',
+    GoToWithoutPathRoot: 'root_without_path',
   },
   states: {
     home: {
@@ -70,6 +72,25 @@ const machineConfig = {
         }
       }
     },
+    nested_mixed_without_path: {
+      meta: { path: '/nested_mixed_without_path' },
+      initial: 'path0',
+      states: {
+        path0: {
+          meta: { path: '/nested_mixed_without_path/path0' }
+        },
+        path1: {
+          meta: { path: '/nested_mixed_without_path/path1' }
+        },
+        path2: {},
+        without_path: {},
+      },
+    },
+    root_path0: {
+      meta: { path: '/root_without_path/path0' }
+    },
+    root_path2: {},
+    root_without_path: {},
     noMatch: {
       meta: { path: '(.*)' }
     },
@@ -110,9 +131,11 @@ class App extends React.Component<any, any> {
   render() {
     return (
       <div>
-        <div><button data-testid="go-about" onClick={() => this.send('GoAbout')}></button></div>}
-        <div><button data-testid="go-substate-b" onClick={() => this.send('GoSubstateB')}></button></div>}
-        <div><button data-testid="go-substate-c" onClick={() => this.send('GoSubstateC', { param: 817 })}></button></div>}
+        <div><button data-testid="go-about" onClick={() => this.send('GoAbout')}></button></div>
+        <div><button data-testid="go-substate-b" onClick={() => this.send('GoSubstateB')}></button></div>
+        <div><button data-testid="go-substate-c" onClick={() => this.send('GoSubstateC', { param: 817 })}></button></div>
+        <div><button data-testid="go-without_path" onClick={() => this.send('GoToWithoutPath')}></button></div>
+        <div><button data-testid="go-without_path_root" onClick={() => this.send('GoToWithoutPathRoot')}></button></div>
         <div data-testid="state">{stateToString(this.state.machineState)}</div>}
         <div data-testid="location-display">{this.props.history.location.pathname}</div>
       </div>
@@ -127,6 +150,28 @@ describe('XStateRouter', () => {
   it('When enter a route, should update the state', () => {
     const { getByTestId } = renderWithRouter(App, { route: '/about' })
     expect(getByTestId('state').textContent).toBe('about')
+  })
+
+  it('When enter a route with siblings states with no path, should work', () => {
+    const { getByTestId } = renderWithRouter(App, { route: '/nested_mixed_without_path/path1' })
+    expect(getByTestId('state').textContent).toBe('nested_mixed_without_path.path1')
+  })
+
+  it('When enter a state with no path with siblings with path, should work', () => {
+    const { getByTestId } = renderWithRouter(App, { route: '/nested_mixed_without_path' })
+    fireEvent.click(getByTestId('go-without_path'))
+    expect(getByTestId('state').textContent).toBe('nested_mixed_without_path.without_path')
+  })
+
+  it('When enter a route with siblings states with no path, should work (Root level)', () => {
+    const { getByTestId } = renderWithRouter(App, { route: '/root_without_path/path1' })
+    expect(getByTestId('state').textContent).toBe('path1')
+  })
+
+  it('When enter a state with no path with siblings with path, should work (Root level)', () => {
+    const { getByTestId } = renderWithRouter(App, { route: '/nested_mixed_without_path' })
+    fireEvent.click(getByTestId('go-without_path_root'))
+    expect(getByTestId('state').textContent).toBe('root_without_path')
   })
 
   it('When enter a route and the machine enters to a routable substate, should update the route', () => {
