@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2018",
+    "target": "es2016",
     "module": "commonjs",
     "moduleResolution": "node",
     "jsx": "react",
@@ -21,6 +21,6 @@
     "src/**/*.spec.tsx",
     "src/**/*.spec.ts",
     "node_modules",
-    "lib",
+    "lib"
   ]
 }
