@@ -4,7 +4,21 @@ import { createMemoryHistory } from 'history'
 import { MachineOptions } from 'xstate'
 import { toStatePaths } from 'xstate/lib/utils'
 import { assign } from 'xstate/lib/actions'
-import { routerMachine } from './index'
+import { routerMachine, useRouterMachine } from './index'
+
+const originalError = console.error
+beforeAll(() => {
+  console.error = (...args) => {
+    if (/Warning.*not wrapped in act/.test(args[0])) {
+      return
+    }
+    originalError.call(console, ...args)
+  }
+})
+
+afterAll(() => {
+  console.error = originalError
+})
 
 function renderWithRouter(
   ui,
@@ -101,7 +115,17 @@ const options: MachineOptions<any, any> = {} as MachineOptions<any, any>
 
 const initialContext = {}
 
-class App extends React.Component<any, any> {
+const commonRender = (state, send, history) => (<div>
+  <div><button data-testid="go-about" onClick={() => send('GoAbout')}></button></div>
+  <div><button data-testid="go-substate-b" onClick={() => send('GoSubstateB')}></button></div>
+  <div><button data-testid="go-substate-c" onClick={() => send('GoSubstateC', { param: 817 })}></button></div>
+  <div><button data-testid="go-without_path" onClick={() => send('GoToWithoutPath')}></button></div>
+  <div><button data-testid="go-without_path_root" onClick={() => send('GoToWithoutPathRoot')}></button></div>
+  <div data-testid="state">{stateToString(state.machineState)}</div>}
+  <div data-testid="location-display">{history.location.pathname}</div>
+</div>) 
+
+class AppClassComponent extends React.Component<any, any> {
 
   send: any
   service: any
@@ -129,24 +153,29 @@ class App extends React.Component<any, any> {
   }
 
   render() {
-    return (
-      <div>
-        <div><button data-testid="go-about" onClick={() => this.send('GoAbout')}></button></div>
-        <div><button data-testid="go-substate-b" onClick={() => this.send('GoSubstateB')}></button></div>
-        <div><button data-testid="go-substate-c" onClick={() => this.send('GoSubstateC', { param: 817 })}></button></div>
-        <div><button data-testid="go-without_path" onClick={() => this.send('GoToWithoutPath')}></button></div>
-        <div><button data-testid="go-without_path_root" onClick={() => this.send('GoToWithoutPathRoot')}></button></div>
-        <div data-testid="state">{stateToString(this.state.machineState)}</div>}
-        <div data-testid="location-display">{this.props.history.location.pathname}</div>
-      </div>
-    )
+    return (commonRender(this.state, this.send, this.props.history));
   }
 }
 
+const AppFunctionalComponent = ({history}) => {
+   const machine = useRouterMachine({
+      config: machineConfig,
+      options,
+      initialContext,
+      history 
+    })
+
+    const state = {
+      machineState:  machine.state.value,
+      ctx: machine.state.context
+    }
+
+    return (commonRender(state, machine.send, history));
+}  
+
 afterEach(cleanup)
 
-describe('XStateRouter', () => {
-
+const testClassWithComponent = (App) => {
   it('When enter a route, should update the state', () => {
     const { getByTestId } = renderWithRouter(App, { route: '/about' })
     expect(getByTestId('state').textContent).toBe('about')
@@ -229,5 +258,15 @@ describe('XStateRouter', () => {
     const { getByTestId } = renderWithRouter(App, { route: '/no-matching-route' })
     expect(getByTestId('state').textContent).toBe('noMatch')
   })
+}
 
+
+describe('XStateRouter', () => {
+  describe('routerMachine', () => {
+    testClassWithComponent(AppClassComponent)
+  })
+
+  describe('useRouterMachine', () => {
+    testClassWithComponent(AppFunctionalComponent)
+  })
 })

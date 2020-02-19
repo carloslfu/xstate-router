@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { pathToRegexp } from 'path-to-regexp'
-import { Machine, matchesState, StateSchema, EventObject, MachineConfig, MachineOptions, interpret } from 'xstate'
+import { useMachine } from '@xstate/react'
+import { Machine, matchesState, StateSchema, EventObject, MachineConfig, MachineOptions, StateMachine, interpret } from 'xstate'
 import { getStateNodes } from '@xstate/graph'
 import { assign } from 'xstate/lib/actions'
 import { createBrowserHistory } from 'history'
@@ -102,6 +104,29 @@ interface RouterArgs<
   history?
 }
 
+export function createRouterMachine<
+  TContext = any,
+  TState extends StateSchema = any,
+  TEvent extends EventObject = any
+>({
+  config,
+  options = ({} as MachineOptions<TContext, TEvent>),
+  initialContext = {},
+  history = createBrowserHistory(),
+}: RouterArgs): StateMachine<TContext, TState, TEvent> {
+  const routes = getRoutes(config)
+  const enhancedConfig = addRouterEvents(history, config, routes)
+  const currentLocation = history.location
+  const enhancedContext = {
+    ...initialContext,
+    match: resolve(routes, currentLocation),
+    location: currentLocation,
+    history
+  }
+
+  return Machine(enhancedConfig, options, enhancedContext);
+}
+
 export function routerMachine<
   TContext = any,
   TState extends StateSchema = any,
@@ -112,20 +137,39 @@ export function routerMachine<
   initialContext = {},
   history = createBrowserHistory(),
 }: RouterArgs) {
-  let debounceHistoryFlag = false
-  let debounceState = false
-  const routes = getRoutes(config)
-  const enhancedConfig = addRouterEvents(history, config, routes)
-  const currentLocation = history.location
-  const enhancedContext = {
-    ...initialContext,
-    match: resolve(routes, currentLocation),
-    location: currentLocation,
-    history
-  }
-  const service = interpret(Machine(enhancedConfig, options, enhancedContext))
+  const machine = createRouterMachine({config, options, initialContext, history})
+  const service = interpret(machine)
   service.start()
 
+  handleTransitionEvents(service, history, getRoutes(config))
+
+  return service
+}
+
+export function useRouterMachine
+<
+  TContext = any,
+  TState extends StateSchema = any,
+  TEvent extends EventObject = any
+>({
+  config,
+  options = ({} as MachineOptions<TContext, TEvent>),
+  initialContext = {},
+  history = createBrowserHistory(),
+}: RouterArgs) {
+  const machine = createRouterMachine({config, options, initialContext, history})
+  const [state, send, service] = useMachine(machine);
+
+  useEffect(() => {
+    handleTransitionEvents(service, history, getRoutes(config))
+  }, [])
+
+  return {state, send, service};
+}
+
+export function handleTransitionEvents (service, history, routes) {
+  let debounceHistoryFlag = false
+  let debounceState = false
   handleRouterTransition(history.location)
 
   service.onTransition(state => {
@@ -179,8 +223,6 @@ export function routerMachine<
       }
     }
   }
-
-  return service
 }
 
 export function findPathRecursive(stateNode) {

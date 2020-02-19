@@ -15,15 +15,17 @@
     "build:watch": "tsc --watch"
   },
   "peerDependencies": {
+    "@xstate/react": "^0.8.1",
+    "react": "^16.12.0",
     "xstate": "^4.7.6"
   },
   "devDependencies": {
+    "@testing-library/react": "^9.4.0",
     "@types/jest": "^24.9.0",
     "@types/react": "^16.9.18",
     "jest": "^24.8.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
-    "@testing-library/react": "^9.4.0",
     "ts-jest": "^24.3.0",
     "typescript": "^3.7.5",
     "xstate": "^4.7.6"
@@ -41,6 +43,7 @@
   "license": "MIT",
   "dependencies": {
     "@xstate/graph": "^1.0.0",
+    "@xstate/react": "^0.8.1",
     "history": "^4.10.1",
     "path-to-regexp": "^6.1.0"
   }
