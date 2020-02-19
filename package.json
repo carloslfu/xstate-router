@@ -1,6 +1,6 @@
 {
   "name": "xstate-router",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "XState Router. Add routes to your XState machine.",
   "main": "lib/index.js",
   "files": [
