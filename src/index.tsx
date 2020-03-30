@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { pathToRegexp } from 'path-to-regexp'
 import { useMachine } from '@xstate/react'
-import { Machine, matchesState, StateSchema, EventObject, MachineConfig, MachineOptions, StateMachine, interpret } from 'xstate'
+import { Machine, matchesState, StateSchema, EventObject, MachineConfig, MachineOptions, StateMachine, InterpreterOptions, interpret } from 'xstate'
 import { getStateNodes } from '@xstate/graph'
 import { assign } from 'xstate/lib/actions'
 import { createBrowserHistory } from 'history'
@@ -136,9 +136,11 @@ export function routerMachine<
   options = ({} as MachineOptions<TContext, TEvent>),
   initialContext = {},
   history = createBrowserHistory(),
-}: RouterArgs) {
+}: RouterArgs,
+  interpreterOptions?: Partial<InterpreterOptions>
+) {
   const machine = createRouterMachine({config, options, initialContext, history})
-  const service = interpret(machine)
+  const service = interpret(machine, interpreterOptions)
   service.start()
 
   handleTransitionEvents(service, history, getRoutes(config))
@@ -156,9 +158,10 @@ export function useRouterMachine
   options = ({} as MachineOptions<TContext, TEvent>),
   initialContext = {},
   history = createBrowserHistory(),
-}: RouterArgs) {
+}: RouterArgs,
+  interpreterOptions?: Partial<InterpreterOptions>) {
   const machine = createRouterMachine({config, options, initialContext, history})
-  const [state, send, service] = useMachine(machine);
+  const [state, send, service] = useMachine(machine, interpreterOptions);
 
   useEffect(() => {
     handleTransitionEvents(service, history, getRoutes(config))
