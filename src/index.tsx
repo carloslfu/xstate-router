@@ -185,9 +185,10 @@ export function handleTransitionEvents (service, history, routes) {
       debounceState = false
       return
     }
-    if (!matchURI(path, history.location.pathname)) {
+
+    const uri = buildURI(path, state.context.match)
+    if (uri !==  history.location.pathname) {
       debounceHistoryFlag = true
-      const uri = buildURI(path, state.context.match)
       history.push(uri)
       service.send({ type: routerEvent, dueToStateTransition: true, route: path, service: service })
     }
