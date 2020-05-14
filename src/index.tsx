@@ -195,16 +195,16 @@ export function handleTransitionEvents (service, history, routes) {
   })
 
   history.listen(location => {
-    
+
     if (!service.initialized) {
       service.start();
     }
-    
+
     if (debounceHistoryFlag) {
       debounceHistoryFlag = false
       return
     }
-    
+
     handleRouterTransition(location, true)
   })
 
