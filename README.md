@@ -48,6 +48,45 @@ service.onChange(ctx => console.log(ctx))
 */
 
 ```
+
+### Use with React Hooks
+
+```javascript
+import { useRouterMachine } from 'xstate-router'
+
+const config = {
+  initial: 'home',
+  states: {
+    home: { meta: { path: '/' }, on: { NEXT: 'about' } },
+    about: { meta: { path: '/about' }, on: { NEXT: 'dashboard' } },
+    dashboard: {
+      meta: { path: '/dashboard' },
+      initial: 'login',
+      on: { NEXT: 'home' },
+      states: {
+        loggedIn: {
+          initial: 'main',
+          states: {
+            main: { meta: { path: '/dashboard/main' } },
+            data: { meta: { path: '/dashboard/data' } }
+          }
+        },
+        login: {
+          meta: { path: '/dashboard/login' },
+          on: { LoggedIn: 'loggedIn' }
+        }
+      }
+    }
+  }
+}
+
+function App() {
+    const service = useRouterMachine({ config })
+
+    return <div>{service.state.value}</div>
+}
+```
+
 ### Enhanced context
 
 1. *match:*
