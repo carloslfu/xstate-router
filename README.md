@@ -2,8 +2,6 @@
 
 XState Router. Add routes to your XState machine and maintain it in sync with the actual route.
 
-If you want to use this solution with hooks [use-router-machine](https://github.com/carloslfu/use-router-machine).
-
 ## Use
 
 Install the library with `npm i xstate-router`.
