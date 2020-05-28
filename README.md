@@ -108,7 +108,7 @@ if you translate to a state having a parameterized route then you have to ensure
             }
          }
       }
-      details: { meta: { path: '/items/:id:/details'} }
+      details: { meta: { path: '/items/:id/details'} }
   }
 ```
 where the event trigger could look like this:
@@ -118,7 +118,7 @@ where the event trigger could look like this:
 
 ### Paths
 
-Paths could have parameters such as `/items/:id:/details` and regular expressions, for more information please read this: https://github.com/pillarjs/path-to-regexp.
+Paths could have parameters such as `/items/:id/details` and regular expressions, for more information please read this: https://github.com/pillarjs/path-to-regexp.
 
 ### Router events
 
