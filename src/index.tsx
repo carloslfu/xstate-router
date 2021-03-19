@@ -164,7 +164,7 @@ export function useRouterMachine
   const [state, send, service] = useMachine(machine, interpreterOptions);
 
   useEffect(() => {
-    handleTransitionEvents(service, history, getRoutes(config))
+    return handleTransitionEvents(service, history, getRoutes(config))
   }, [])
 
   return {state, send, service};
@@ -194,7 +194,7 @@ export function handleTransitionEvents (service, history, routes) {
     }
   })
 
-  history.listen(location => {
+  return history.listen(location => {
 
     if (!service.initialized) {
       service.start();
